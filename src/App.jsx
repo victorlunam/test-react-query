@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQuery } from "react-query";
 import "./App.css";
 import { search } from "./controller";
 import Loader from "./Loader";
@@ -15,11 +16,15 @@ function CardImage({ title, url, description }) {
 
 function App() {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const { data, error, isLoading, refetch } = useQuery(
+    ["search", query],
+    () => search(query),
+    {
+      enabled: false,
+    }
+  );
 
-  console.log("render");
+  const results = data?.photos ?? [];
 
   const handleChangeQuery = ({ target }) => setQuery(target.value);
 
@@ -27,18 +32,7 @@ function App() {
     e.preventDefault();
     if (query === "") return;
 
-    setLoading(true);
-
-    search(query)
-      .then((res) => res.json())
-      .then((res) => {
-        setLoading(false);
-        setResults(res.photos ?? []);
-      })
-      .catch((err) => {
-        setLoading(false);
-        setError(err);
-      });
+    refetch();
   };
 
   return (
@@ -57,20 +51,18 @@ function App() {
 
       {error && <p className="error">{error.message}</p>}
 
-      {loading ? (
-        <Loader />
-      ) : (
-        <div className="container">
-          {results.map((result) => (
-            <CardImage
-              key={result.id}
-              title={result.photographer}
-              url={result.src.medium}
-              description={result.alt}
-            />
-          ))}
-        </div>
-      )}
+      {isLoading && <Loader />}
+
+      <div className="container">
+        {results.map((result) => (
+          <CardImage
+            key={result.id}
+            title={result.photographer}
+            url={result.src.medium}
+            description={result.alt}
+          />
+        ))}
+      </div>
     </div>
   );
 }

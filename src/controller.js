@@ -7,6 +7,6 @@ const fetcher = (path) =>
     },
   });
 
-export const search = (query) => fetcher(`search?query=${query}`);
+export const search = (query) => fetcher(`search?query=${query}`).then(res => res.json());
 
 export default fetcher;
